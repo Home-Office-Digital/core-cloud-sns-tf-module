@@ -21,6 +21,10 @@ variable "topics" {
     signature_version = optional(number, null)
     tracing_config    = optional(string, null)
 
+    # Data protection policy (JSON). Scans message payloads for sensitive data
+    # such as PII. Supported on standard topics only, not FIFO.
+    data_protection_policy = optional(string, null)
+
     # Topic access policy.
     # When policy is set, it is used verbatim and overrides the module-generated
     # cross-account publish policy (full-replacement escape hatch).
@@ -98,6 +102,15 @@ variable "topics" {
       ]
     ]))
     error_message = "An sqs subscription on a FIFO topic must point at a FIFO queue (endpoint ARN ending in \".fifo\"). A standard queue does not preserve FIFO ordering."
+  }
+
+  # Data protection policies are supported on standard topics only, not FIFO.
+  validation {
+    condition = alltrue([
+      for _, topic in var.topics :
+      topic.data_protection_policy == null ? true : !topic.fifo_topic
+    ])
+    error_message = "data_protection_policy is supported on standard topics only; it cannot be set on a FIFO topic (fifo_topic = true)."
   }
 
   # fifo_throughput_scope, when set, must be a valid value. The null guard uses a

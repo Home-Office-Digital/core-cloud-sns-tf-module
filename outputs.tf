@@ -18,6 +18,11 @@ output "topic_owners" {
   value       = { for k, v in aws_sns_topic.this : k => v.owner }
 }
 
+output "data_protection_policy_topic_arns" {
+  description = "A map of topic ARNs that have a data protection policy, keyed by topic key."
+  value       = { for k, v in aws_sns_topic_data_protection_policy.this : k => v.arn }
+}
+
 output "subscription_arns" {
   description = "SNS subscription ARNs as a nested map: topic key => subscription key => ARN."
   value = {

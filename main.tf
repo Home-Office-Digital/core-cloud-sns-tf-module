@@ -96,6 +96,16 @@ resource "aws_sns_topic" "this" {
   })
 }
 
+# Optional data protection policy per topic. Scans message payloads for
+# sensitive data (for example PII). Standard topics only; the variable
+# validation rejects it on FIFO topics.
+resource "aws_sns_topic_data_protection_policy" "this" {
+  for_each = local.data_protection_topics
+
+  arn    = aws_sns_topic.this[each.key].arn
+  policy = each.value.data_protection_policy
+}
+
 resource "aws_sns_topic_subscription" "this" {
   for_each = local.topic_subscriptions
 

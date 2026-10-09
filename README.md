@@ -106,6 +106,7 @@ Each entry in `var.topics` is an object with the following attributes.
 | `delivery_policy` | string | `null` | SNS delivery policy JSON (HTTP/S retries, backoff). |
 | `signature_version` | number | `null` | `1` (SHA1) or `2` (SHA256). |
 | `tracing_config` | string | `null` | `PassThrough` or `Active` (X-Ray). Active tracing is [supported on both standard and FIFO topics](https://docs.aws.amazon.com/sns/latest/dg/sns-active-tracing.html). |
+| `data_protection_policy` | string | `null` | Data protection policy JSON. Scans message payloads for sensitive data such as PII. Standard topics only (rejected on FIFO topics). |
 
 ### Access policy
 
@@ -172,6 +173,7 @@ Each entry in a topic's `subscriptions` map is an object:
 | `topic_ids` | Map of topic IDs (ARNs) keyed by topic key. |
 | `topic_names` | Map of topic names keyed by topic key. |
 | `topic_owners` | Map of owning account IDs keyed by topic key. |
+| `data_protection_policy_topic_arns` | Map of topic ARNs that have a data protection policy, keyed by topic key. |
 | `subscription_arns` | Nested map of subscription ARNs: topic key => subscription key => ARN. |
 
 ## Testing

@@ -55,6 +55,12 @@ locals {
     )
   }
 
+  # Topics that set a data protection policy, keyed by topic key.
+  data_protection_topics = {
+    for key, topic in var.topics : key => topic
+    if topic.data_protection_policy != null
+  }
+
   # Flatten the per-topic subscriptions maps into a single map so
   # aws_sns_topic_subscription can be driven with for_each (never count).
   #
