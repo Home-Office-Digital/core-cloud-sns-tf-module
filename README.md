@@ -106,7 +106,7 @@ Each entry in `var.topics` is an object with the following attributes.
 | `delivery_policy` | string | `null` | SNS delivery policy JSON (HTTP/S retries, backoff). |
 | `signature_version` | number | `null` | `1` (SHA1) or `2` (SHA256). |
 | `tracing_config` | string | `null` | `PassThrough` or `Active` (X-Ray). Active tracing is [supported on both standard and FIFO topics](https://docs.aws.amazon.com/sns/latest/dg/sns-active-tracing.html). |
-| `data_protection_policy` | string | `null` | Data protection policy JSON. Scans message payloads for sensitive data such as PII. Standard topics only (rejected on FIFO topics). |
+| `data_protection_policy` | string | `null` | Data protection policy JSON. Scans message payloads for sensitive data such as PII. Standard topics only (rejected on FIFO topics). AWS no longer offers SNS message data protection to new customers as of 30 April 2026; it remains available only in accounts that configured a policy before that date. See [AWS's availability notice](https://docs.aws.amazon.com/sns/latest/dg/sns-message-data-protection-availability-change.html). |
 
 ### Access policy
 
