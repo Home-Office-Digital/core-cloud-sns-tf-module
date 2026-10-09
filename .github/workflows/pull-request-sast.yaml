@@ -49,7 +49,7 @@ jobs:
         uses: Home-Office-Digital/core-cloud-workflow-terraform-actions/actions/validate@8426dac89fd06a74aad9788601029c12be3984c6 # 1.2.1
 
       - name: Terraform Format
-        uses: Home-Office-Digital/core-cloud-workflow-terraform-actions/actions/fmt@ef895a4ff575e28fd32a289eb604b7e0869d4033 # 1.2.2
+        uses: Home-Office-Digital/core-cloud-workflow-terraform-actions/actions/fmt@17e774f175df28a98abdc7ed4030e6f624f659de # 1.2.5
         with:
           recursive: false
 
