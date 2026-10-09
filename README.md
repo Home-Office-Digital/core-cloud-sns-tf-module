@@ -145,6 +145,14 @@ Each entry in a topic's `subscriptions` map is an object:
 | `confirmation_timeout_in_minutes` | number | `null` | Minutes to wait for subscription confirmation (HTTP/S). |
 | `endpoint_auto_confirms` | bool | `null` | Whether the endpoint can auto-confirm. |
 
+> **The module creates the subscription, not the target's permission to receive.** A subscription only delivers if the target resource allows SNS to send to it. The caller is responsible for granting that access:
+> - **SQS**: the queue policy must allow `sqs:SendMessage` from `sns.amazonaws.com`, scoped to the topic ARN via `aws:SourceArn`.
+> - **Lambda**: an `aws_lambda_permission` must allow `lambda:InvokeFunction` with principal `sns.amazonaws.com` and the topic ARN as `source_arn`.
+>
+> A successful `apply` creates the subscription but does not prove delivery works; verify the target permission separately.
+
+> **Pending confirmation for `email`, `email-json`, and non-auto-confirming `http`/`https`.** These subscriptions stay in a pending state until confirmed outside Terraform (for example by clicking the link in the confirmation email). While pending, AWS will not let Terraform unsubscribe them: a `destroy` removes the subscription from Terraform state but leaves the pending subscription in AWS. `sqs`, `lambda` and `firehose` confirm automatically and are not affected.
+
 ## Module inputs
 
 | Name | Type | Default | Description |

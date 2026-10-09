@@ -134,6 +134,60 @@ run "raw_policy_override" {
   }
 }
 
+# A wildcard publish principal is rejected: it would make the topic public.
+run "wildcard_publish_principal_rejected" {
+  command = plan
+
+  variables {
+    topics = {
+      shared = {
+        name                       = "test-shared"
+        allowed_publish_principals = ["*"]
+      }
+    }
+  }
+
+  expect_failures = [
+    var.topics,
+  ]
+}
+
+# A blank publish principal is rejected.
+run "blank_publish_principal_rejected" {
+  command = plan
+
+  variables {
+    topics = {
+      shared = {
+        name                       = "test-shared"
+        allowed_publish_principals = [""]
+      }
+    }
+  }
+
+  expect_failures = [
+    var.topics,
+  ]
+}
+
+# A non-12-digit publish account id is rejected.
+run "invalid_publish_account_id_rejected" {
+  command = plan
+
+  variables {
+    topics = {
+      shared = {
+        name                        = "test-shared"
+        allowed_publish_account_ids = ["12345"]
+      }
+    }
+  }
+
+  expect_failures = [
+    var.topics,
+  ]
+}
+
 # A topic with neither convenience inputs nor a raw policy produces no generated
 # policy document, so SNS applies its default policy.
 run "no_policy_leaves_default" {

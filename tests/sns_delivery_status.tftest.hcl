@@ -115,3 +115,21 @@ run "sample_rate_above_100_rejected" {
     var.topics,
   ]
 }
+
+# A fractional sample rate is rejected: the AWS provider schema is an integer.
+run "fractional_sample_rate_rejected" {
+  command = plan
+
+  variables {
+    topics = {
+      bad = {
+        name                             = "test-bad"
+        sqs_success_feedback_sample_rate = 50.5
+      }
+    }
+  }
+
+  expect_failures = [
+    var.topics,
+  ]
+}

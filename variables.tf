@@ -94,11 +94,13 @@ variable "topics" {
     error_message = "An sqs subscription on a FIFO topic must point at a FIFO queue (endpoint ARN ending in \".fifo\"). A standard queue does not preserve FIFO ordering."
   }
 
-  # fifo_throughput_scope, when set, must be a valid value.
+  # fifo_throughput_scope, when set, must be a valid value. The null guard uses a
+  # conditional (not ||) so the inactive branch is not evaluated on Terraform
+  # 1.7.5, which does not discard diagnostics from the unused operand of ||.
   validation {
     condition = alltrue([
       for _, topic in var.topics :
-      topic.fifo_throughput_scope == null || contains(["Topic", "MessageGroup"], topic.fifo_throughput_scope)
+      topic.fifo_throughput_scope == null ? true : contains(["Topic", "MessageGroup"], topic.fifo_throughput_scope)
     ])
     error_message = "fifo_throughput_scope must be either \"Topic\" or \"MessageGroup\"."
   }
@@ -107,7 +109,7 @@ variable "topics" {
   validation {
     condition = alltrue([
       for _, topic in var.topics :
-      topic.signature_version == null || contains([1, 2], topic.signature_version)
+      topic.signature_version == null ? true : contains([1, 2], topic.signature_version)
     ])
     error_message = "signature_version must be either 1 (SHA1) or 2 (SHA256)."
   }
@@ -116,12 +118,15 @@ variable "topics" {
   validation {
     condition = alltrue([
       for _, topic in var.topics :
-      topic.tracing_config == null || contains(["PassThrough", "Active"], topic.tracing_config)
+      topic.tracing_config == null ? true : contains(["PassThrough", "Active"], topic.tracing_config)
     ])
     error_message = "tracing_config must be either \"PassThrough\" or \"Active\"."
   }
 
-  # Delivery status sample rates are percentages (0-100).
+  # Delivery status sample rates are whole-number percentages (0-100). The null
+  # guard uses a conditional (not ||) so the numeric comparisons are not
+  # evaluated for the default null on Terraform 1.7.5. The AWS provider schema
+  # for these attributes is an integer, so a fractional value is rejected.
   validation {
     condition = alltrue(flatten([
       for _, topic in var.topics : [
@@ -131,10 +136,10 @@ variable "topics" {
           topic.http_success_feedback_sample_rate,
           topic.firehose_success_feedback_sample_rate,
           topic.application_success_feedback_sample_rate,
-        ] : rate == null || (rate >= 0 && rate <= 100)
+        ] : rate == null ? true : (rate >= 0 && rate <= 100 && floor(rate) == rate)
       ]
     ]))
-    error_message = "Delivery status success feedback sample rates must be between 0 and 100."
+    error_message = "Delivery status success feedback sample rates must be whole numbers between 0 and 100."
   }
 
   # Subscription protocols must be supported by the AWS provider.
@@ -153,18 +158,44 @@ variable "topics" {
     condition = alltrue(flatten([
       for _, topic in var.topics : [
         for _, sub in topic.subscriptions :
-        sub.filter_policy_scope == null || contains(["MessageAttributes", "MessageBody"], sub.filter_policy_scope)
+        sub.filter_policy_scope == null ? true : contains(["MessageAttributes", "MessageBody"], sub.filter_policy_scope)
       ]
     ]))
     error_message = "filter_policy_scope must be either \"MessageAttributes\" or \"MessageBody\"."
   }
 
-  # A firehose subscription requires a subscription_role_arn.
+  # allowed_publish_account_ids must be 12-digit AWS account IDs.
+  validation {
+    condition = alltrue(flatten([
+      for _, topic in var.topics : [
+        for id in topic.allowed_publish_account_ids : can(regex("^[0-9]{12}$", id))
+      ]
+    ]))
+    error_message = "Each allowed_publish_account_ids entry must be a 12-digit AWS account ID."
+  }
+
+  # allowed_publish_principals must be non-empty and must not be a bare wildcard.
+  # Granting SNS:Publish to "*" would make the topic publicly writable, which is
+  # never the intent of a cross-account allow-list and is flagged by the SNS
+  # security best practices.
+  validation {
+    condition = alltrue(flatten([
+      for _, topic in var.topics : [
+        for principal in topic.allowed_publish_principals :
+        trimspace(principal) != "" && principal != "*"
+      ]
+    ]))
+    error_message = "allowed_publish_principals must contain specific principal ARNs. Blank values and the wildcard \"*\" are not allowed, because \"*\" would make the topic publicly writable."
+  }
+
+  # A firehose subscription requires a subscription_role_arn. The protocol guard
+  # uses a conditional (not ||) so trimspace is not evaluated against the null
+  # role of a non-firehose subscription on Terraform 1.7.5.
   validation {
     condition = alltrue(flatten([
       for _, topic in var.topics : [
         for _, sub in topic.subscriptions :
-        sub.protocol != "firehose" || (sub.subscription_role_arn != null && trimspace(sub.subscription_role_arn) != "")
+        sub.protocol != "firehose" ? true : (sub.subscription_role_arn != null && trimspace(coalesce(sub.subscription_role_arn, " ")) != "")
       ]
     ]))
     error_message = "A subscription with protocol \"firehose\" must set subscription_role_arn."
