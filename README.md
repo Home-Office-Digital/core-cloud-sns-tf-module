@@ -111,11 +111,14 @@ Each entry in `var.topics` is an object with the following attributes.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `policy` | string | `null` | Raw topic policy JSON. Overrides the generated cross-account publish policy. |
+| `policy` | string | `null` | Raw topic policy JSON. Full-replacement escape hatch: overrides the generated policy entirely. |
 | `allowed_publish_account_ids` | list(string) | `[]` | Account IDs permitted to publish. Each is listed directly as an `AWS` principal, granting the whole account. |
 | `allowed_publish_principals` | list(string) | `[]` | Principal ARNs (roles/users) permitted to publish, listed directly as `AWS` principals. |
+| `extra_policy_documents` | list(string) | `[]` | Additional IAM policy document JSON strings merged into the generated policy. Lets you add statements without hand-writing the whole policy. Each statement must use a `Sid` other than `AllowCrossAccountPublish`. |
 
 When `allowed_publish_account_ids` and/or `allowed_publish_principals` are set (and no raw `policy` is given), the module generates one `Allow SNS:Publish` statement whose principals are the union of both lists. Account IDs grant the whole account; ARNs grant that specific role or user. This is the form AWS itself uses, and it works for ordinary cross-account IAM publish requests.
+
+To add statements to the generated policy without replacing it, pass `extra_policy_documents` (a list of IAM policy document JSON strings). They are merged in via the `aws_iam_policy_document` `source_policy_documents` argument, so the generated publish statement is preserved and your statements are appended. The merge requires unique `Sid`s. Supplying only `extra_policy_documents` (no publish principals) generates a policy containing just those statements. The raw `policy` input remains the full-replacement escape hatch.
 
 ### Delivery status logging
 

@@ -25,22 +25,23 @@ locals {
     topic.policy != null && trimspace(coalesce(topic.policy, "")) != ""
   }
 
-  # Topics that get a module-generated cross-account publish policy: those with
-  # at least one allowed publish account id or principal and no raw override.
-  generated_policy_topics = {
-    for key, topic in var.topics : key => topic
-    if !local.topic_has_raw_policy[key] && (
-      length(topic.allowed_publish_account_ids) > 0 || length(topic.allowed_publish_principals) > 0
-    )
-  }
-
   # Principals allowed to publish, per topic: the union of the allowed account
   # ids and the explicit principal ARNs, listed directly as AWS principals.
   publish_principals = {
-    for key, topic in local.generated_policy_topics : key => distinct(concat(
+    for key, topic in var.topics : key => distinct(concat(
       topic.allowed_publish_account_ids,
       topic.allowed_publish_principals,
     ))
+  }
+
+  # Topics that get a module-generated access policy, and have no raw override.
+  # A policy is generated when the topic either grants cross-account publish
+  # (has account ids or principals) or supplies extra policy documents to merge.
+  generated_policy_topics = {
+    for key, topic in var.topics : key => topic
+    if !local.topic_has_raw_policy[key] && (
+      length(local.publish_principals[key]) > 0 || length(topic.extra_policy_documents) > 0
+    )
   }
 
   # Effective topic access policy. A raw per-topic policy takes precedence over

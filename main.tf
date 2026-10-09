@@ -4,29 +4,41 @@ data "aws_partition" "current" {}
 
 data "aws_region" "current" {}
 
-# Cross-account publish policy generated from the convenience inputs. One
-# document per topic that requests one, granting SNS:Publish on the topic ARN
-# to the named principals.
+# Module-generated topic access policy. One document per topic that requests
+# one (see local.generated_policy_topics).
 #
-# The allowed principals are the union of allowed_publish_account_ids and
-# allowed_publish_principals, listed directly as AWS principals. A bare account
-# id grants the whole account (AWS expands it to the account root), and a role
-# or user ARN grants that principal. This is the form AWS itself generates for
-# AddPermission, and it works for ordinary cross-account IAM requests, unlike a
-# Principal "*" scoped by an aws:SourceOwner condition.
+# The cross-account publish statement grants SNS:Publish on the topic ARN to the
+# union of allowed_publish_account_ids and allowed_publish_principals, listed
+# directly as AWS principals. A bare account id grants the whole account (AWS
+# expands it to the account root), and a role or user ARN grants that principal.
+# This is the form AWS itself generates for AddPermission, and it works for
+# ordinary cross-account IAM requests, unlike a Principal "*" scoped by an
+# aws:SourceOwner condition. The statement is only emitted when there are
+# principals to grant, so a topic that supplies only extra_policy_documents does
+# not render an invalid empty-principals statement.
+#
+# extra_policy_documents are merged in via source_policy_documents, letting
+# callers add statements onto the generated policy without hand-writing the
+# whole thing. source_policy_documents requires unique Sids, so caller
+# statements must not reuse "AllowCrossAccountPublish".
 data "aws_iam_policy_document" "publish" {
   for_each = local.generated_policy_topics
 
-  statement {
-    sid    = "AllowCrossAccountPublish"
-    effect = "Allow"
+  source_policy_documents = each.value.extra_policy_documents
 
-    actions   = ["SNS:Publish"]
-    resources = [local.topic_arns[each.key]]
+  dynamic "statement" {
+    for_each = length(local.publish_principals[each.key]) > 0 ? [1] : []
+    content {
+      sid    = "AllowCrossAccountPublish"
+      effect = "Allow"
 
-    principals {
-      type        = "AWS"
-      identifiers = local.publish_principals[each.key]
+      actions   = ["SNS:Publish"]
+      resources = [local.topic_arns[each.key]]
+
+      principals {
+        type        = "AWS"
+        identifiers = local.publish_principals[each.key]
+      }
     }
   }
 }

@@ -98,3 +98,109 @@ run "rendered_publish_policy_contents" {
     error_message = "Rendered publish policy must not grant to a wildcard principal"
   }
 }
+
+# extra_policy_documents are merged into the generated policy alongside the
+# generated publish statement, so callers can add statements without replacing
+# the whole policy.
+run "extra_policy_documents_merged_with_publish" {
+  command = plan
+
+  override_data {
+    target = data.aws_caller_identity.current
+    values = {
+      account_id = "444455556666"
+    }
+  }
+
+  override_data {
+    target = data.aws_region.current
+    values = {
+      region = "eu-west-2"
+    }
+  }
+
+  override_data {
+    target = data.aws_partition.current
+    values = {
+      partition = "aws"
+    }
+  }
+
+  variables {
+    topics = {
+      shared = {
+        name                        = "test-shared"
+        allowed_publish_account_ids = ["222222222222"]
+        extra_policy_documents = [
+          "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"AllowSubscribe\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::777788889999:root\"},\"Action\":\"SNS:Subscribe\",\"Resource\":\"*\"}]}"
+        ]
+      }
+    }
+  }
+
+  # The generated publish statement is still present.
+  assert {
+    condition     = strcontains(data.aws_iam_policy_document.publish["shared"].json, "AllowCrossAccountPublish")
+    error_message = "The generated publish statement must remain when extra_policy_documents are supplied"
+  }
+
+  # The extra statement is merged in.
+  assert {
+    condition     = strcontains(data.aws_iam_policy_document.publish["shared"].json, "AllowSubscribe")
+    error_message = "extra_policy_documents statements must be merged into the generated policy"
+  }
+
+  assert {
+    condition     = strcontains(data.aws_iam_policy_document.publish["shared"].json, "SNS:Subscribe")
+    error_message = "The merged extra statement must retain its action"
+  }
+}
+
+# A topic that supplies only extra_policy_documents (no publish principals) still
+# generates a policy, containing just the extra statements and no empty publish.
+run "extra_policy_documents_only" {
+  command = plan
+
+  override_data {
+    target = data.aws_caller_identity.current
+    values = {
+      account_id = "444455556666"
+    }
+  }
+
+  override_data {
+    target = data.aws_region.current
+    values = {
+      region = "eu-west-2"
+    }
+  }
+
+  override_data {
+    target = data.aws_partition.current
+    values = {
+      partition = "aws"
+    }
+  }
+
+  variables {
+    topics = {
+      shared = {
+        name = "test-shared"
+        extra_policy_documents = [
+          "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"AllowSubscribe\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::777788889999:root\"},\"Action\":\"SNS:Subscribe\",\"Resource\":\"*\"}]}"
+        ]
+      }
+    }
+  }
+
+  assert {
+    condition     = strcontains(data.aws_iam_policy_document.publish["shared"].json, "AllowSubscribe")
+    error_message = "A topic with only extra_policy_documents must still generate a policy with those statements"
+  }
+
+  # No publish statement is rendered when there are no principals to grant.
+  assert {
+    condition     = !strcontains(data.aws_iam_policy_document.publish["shared"].json, "AllowCrossAccountPublish")
+    error_message = "No publish statement should be rendered when no publish principals are set"
+  }
+}

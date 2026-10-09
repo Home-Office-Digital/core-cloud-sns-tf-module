@@ -23,10 +23,16 @@ variable "topics" {
 
     # Topic access policy.
     # When policy is set, it is used verbatim and overrides the module-generated
-    # cross-account publish policy. allowed_publish_* drive the generated policy.
+    # cross-account publish policy (full-replacement escape hatch).
+    # allowed_publish_* drive the generated cross-account publish statement.
+    # extra_policy_documents are additional IAM policy document JSON strings
+    # merged into the generated policy via source_policy_documents, so callers
+    # can add statements without hand-writing the whole policy. Each extra
+    # statement must use a Sid other than "AllowCrossAccountPublish".
     policy                      = optional(string, null)
     allowed_publish_account_ids = optional(list(string), [])
     allowed_publish_principals  = optional(list(string), [])
+    extra_policy_documents      = optional(list(string), [])
 
     # Delivery status logging. Callers supply the CloudWatch Logs IAM role ARNs.
     # Sample rate is a percentage (0-100) of successfully delivered messages.
