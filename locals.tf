@@ -20,9 +20,12 @@ locals {
   }
 
   # Whether a topic supplies a raw policy that must be used verbatim.
+  # Uses a conditional (not &&) so trimspace is not evaluated against a null
+  # policy on Terraform 1.7.5, which does not discard diagnostics from the
+  # inactive operand of &&.
   topic_has_raw_policy = {
     for key, topic in var.topics : key =>
-    topic.policy != null && trimspace(coalesce(topic.policy, "")) != ""
+    topic.policy == null ? false : trimspace(topic.policy) != ""
   }
 
   # Principals allowed to publish, per topic: the union of the allowed account
