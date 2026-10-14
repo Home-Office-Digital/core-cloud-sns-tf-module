@@ -2,6 +2,13 @@ All notable changes to this project will be documented in this file. This will p
 
 eg:
 
+### [2.0.0] 2026-10-14
+
+  * BREAKING: adopt the Core Cloud `cc_tags` tagging convention to conform to `core-cloud-tf-module-template`. The `tags` variable (a 10-key hyphenated object) is replaced by `cc_tags`, an 8-key snake_case object (`cost_centre`, `account_code`, `portfolio_id`, `project_id`, `service_id`, `environment_type`, `owner_business`, `budget_holder`). The module maps these to the hyphenated resource-tag keys via a new `common_tags` local. Consumers must rename `tags` to `cc_tags` and drop the `source-repo`/`hosting-platform` keys.
+  * Bound the AWS provider constraint to `~> 6.66` (was `>= 6.66.0`) so an uncontrolled future major cannot be pulled in.
+  * Add a default `provider "aws"` block with `region = "eu-west-2"` to match the template. Callers passing their own provider configuration (for example a different region or an assumed role) continue to override it.
+  * Add `CODE_OF_CONDUCT.md` and rename `.github/dependabot.yml` to `.github/dependabot.yaml` to match the template.
+
 ### [0.1.0] 2026-10-08
 
   * Initial tag created for Core Cloud SNS Terraform module. Supports standard and FIFO topics with KMS server-side encryption, nested subscriptions (SQS, Lambda, email and others), cross-account publish topic policies (convenience inputs with a raw policy override), and per-protocol delivery status logging.

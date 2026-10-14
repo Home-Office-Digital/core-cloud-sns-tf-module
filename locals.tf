@@ -1,4 +1,17 @@
 locals {
+  # Core Cloud mandatory tags, mapping the snake_case cc_tags input to the
+  # hyphenated keys applied to every resource. Merged into each resource's tags.
+  common_tags = {
+    cost-centre      = var.cc_tags.cost_centre
+    account-code     = var.cc_tags.account_code
+    portfolio-id     = var.cc_tags.portfolio_id
+    project-id       = var.cc_tags.project_id
+    service-id       = var.cc_tags.service_id
+    environment-type = var.cc_tags.environment_type
+    owner-business   = var.cc_tags.owner_business
+    budget-holder    = var.cc_tags.budget_holder
+  }
+
   # Effective KMS key per topic. A per-topic kms_master_key_id takes precedence
   # over the module default. An explicit empty string disables encryption for
   # that topic (the resource receives null). When the attribute is unset (null)

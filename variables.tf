@@ -221,20 +221,19 @@ variable "topics" {
   }
 }
 
-variable "tags" {
+variable "cc_tags" {
   type = object({
-    cost-centre      = string
-    account-code     = string
-    portfolio-id     = string
-    project-id       = string
-    service-id       = string
-    environment-type = string
-    owner-business   = string
-    budget-holder    = string
-    source-repo      = string
-    hosting-platform = string
+    # Enforced Core Cloud tags, all required for costing and identification.
+    cost_centre      = string
+    account_code     = string
+    portfolio_id     = string
+    project_id       = string
+    service_id       = string
+    environment_type = string
+    owner_business   = string
+    budget_holder    = string
   })
-  description = "Mandatory Core Cloud tags applied to all resources: cost-centre, account-code, portfolio-id, project-id, service-id, environment-type, owner-business, budget-holder, source-repo and hosting-platform."
+  description = "Mandatory Core Cloud tags, mapped to the hyphenated keys applied to every resource via the common_tags local: cost_centre, account_code, portfolio_id, project_id, service_id, environment_type, owner_business and budget_holder."
   nullable    = false
 }
 

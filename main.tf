@@ -91,7 +91,7 @@ resource "aws_sns_topic" "this" {
   application_failure_feedback_role_arn    = each.value.application_failure_feedback_role_arn
   application_success_feedback_sample_rate = each.value.application_success_feedback_sample_rate
 
-  tags = merge(var.tags, {
+  tags = merge(local.common_tags, {
     Name = each.value.name
   })
 }
