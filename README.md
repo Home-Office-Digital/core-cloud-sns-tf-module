@@ -28,7 +28,7 @@ Key design choices:
 
 ```hcl
 module "sns" {
-  source = "git::https://github.com/Home-Office-Digital/core-cloud-sns-tf-module.git?ref=v0.1.0"
+  source = "git::https://github.com/Home-Office-Digital/core-cloud-sns-tf-module.git?ref=v2.0.0"
 
   topics = {
     events = {
