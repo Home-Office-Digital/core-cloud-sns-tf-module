@@ -3,17 +3,15 @@ mock_provider "aws" {}
 
 variables {
   // Required organization tags.
-  tags = {
-    cost-centre      = "CC1001"
-    account-code     = "AC2002"
-    portfolio-id     = "PF3003"
-    project-id       = "PR4004"
-    service-id       = "SV5005"
-    environment-type = "nonprod"
-    owner-business   = "platform"
-    budget-holder    = "finops"
-    source-repo      = "Home-Office-Digital/core-cloud-sns-tf-module"
-    hosting-platform = "test-platform"
+  cc_tags = {
+    cost_centre      = "CC1001"
+    account_code     = "AC2002"
+    portfolio_id     = "PF3003"
+    project_id       = "PR4004"
+    service_id       = "SV5005"
+    environment_type = "nonprod"
+    owner_business   = "platform"
+    budget_holder    = "finops"
   }
 
   topics = {}
@@ -44,6 +42,49 @@ run "standard_topic_default_encryption" {
   assert {
     condition     = aws_sns_topic.this["events"].name == "test-events"
     error_message = "Topic name must match the configured name"
+  }
+}
+
+# cc_tags is mapped to the hyphenated resource-tag keys via common_tags, and the
+# per-topic Name tag is added. This guards the public tagging contract against a
+# typo or omitted mapping in local.common_tags.
+run "cc_tags_mapped_to_resource_tags" {
+  command = plan
+
+  variables {
+    topics = {
+      events = {
+        name = "test-events"
+      }
+    }
+  }
+
+  assert {
+    condition = alltrue([
+      aws_sns_topic.this["events"].tags["cost-centre"] == "CC1001",
+      aws_sns_topic.this["events"].tags["account-code"] == "AC2002",
+      aws_sns_topic.this["events"].tags["portfolio-id"] == "PF3003",
+      aws_sns_topic.this["events"].tags["project-id"] == "PR4004",
+      aws_sns_topic.this["events"].tags["service-id"] == "SV5005",
+      aws_sns_topic.this["events"].tags["environment-type"] == "nonprod",
+      aws_sns_topic.this["events"].tags["owner-business"] == "platform",
+      aws_sns_topic.this["events"].tags["budget-holder"] == "finops",
+    ])
+    error_message = "cc_tags must map to all eight hyphenated resource-tag keys"
+  }
+
+  assert {
+    condition     = aws_sns_topic.this["events"].tags["Name"] == "test-events"
+    error_message = "The per-topic Name tag must be set to the topic name"
+  }
+
+  # The dropped estate keys must not leak back in.
+  assert {
+    condition = alltrue([
+      !contains(keys(aws_sns_topic.this["events"].tags), "source-repo"),
+      !contains(keys(aws_sns_topic.this["events"].tags), "hosting-platform"),
+    ])
+    error_message = "source-repo and hosting-platform are not part of the 8-key cc_tags contract"
   }
 }
 

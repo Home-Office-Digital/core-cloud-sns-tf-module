@@ -22,13 +22,13 @@ Key design choices:
 | Name | Version |
 |------|---------|
 | terraform | >= 1.7.5 |
-| aws | >= 6.66.0 |
+| aws | ~> 6.66 |
 
 ## Usage
 
 ```hcl
 module "sns" {
-  source = "git::https://github.com/Home-Office-Digital/core-cloud-sns-tf-module.git?ref=v0.1.0"
+  source = "git::https://github.com/Home-Office-Digital/core-cloud-sns-tf-module.git?ref=v2.0.0"
 
   topics = {
     events = {
@@ -56,17 +56,15 @@ module "sns" {
     }
   }
 
-  tags = {
-    cost-centre      = "CC1001"
-    account-code     = "AC2002"
-    portfolio-id     = "cto"
-    project-id       = "core-cloud"
-    service-id       = "sns"
-    environment-type = "nonprod"
-    owner-business   = "core-cloud"
-    budget-holder    = "core-cloud"
-    source-repo      = "Home-Office-Digital/core-cloud-sns-tf-module"
-    hosting-platform = "aws"
+  cc_tags = {
+    cost_centre      = "CC1001"
+    account_code     = "AC2002"
+    portfolio_id     = "cto"
+    project_id       = "core-cloud"
+    service_id       = "sns"
+    environment_type = "nonprod"
+    owner_business   = "core-cloud"
+    budget_holder    = "core-cloud"
   }
 }
 ```
@@ -163,7 +161,7 @@ Each entry in a topic's `subscriptions` map is an object:
 |------|------|---------|-------------|
 | `topics` | map(object) | — | Map of topic configurations keyed by an arbitrary topic key. |
 | `default_kms_master_key_id` | string | `"alias/aws/sns"` | Default KMS key used when a topic does not set `kms_master_key_id`. |
-| `tags` | object | — | Mandatory Core Cloud tags applied to all resources. |
+| `cc_tags` | object | — | Mandatory Core Cloud tags (8 snake_case keys) mapped to the hyphenated keys applied to every resource. |
 
 ## Outputs
 

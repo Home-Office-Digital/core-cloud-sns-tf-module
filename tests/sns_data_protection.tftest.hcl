@@ -2,17 +2,15 @@
 mock_provider "aws" {}
 
 variables {
-  tags = {
-    cost-centre      = "CC1001"
-    account-code     = "AC2002"
-    portfolio-id     = "PF3003"
-    project-id       = "PR4004"
-    service-id       = "SV5005"
-    environment-type = "nonprod"
-    owner-business   = "platform"
-    budget-holder    = "finops"
-    source-repo      = "Home-Office-Digital/core-cloud-sns-tf-module"
-    hosting-platform = "test-platform"
+  cc_tags = {
+    cost_centre      = "CC1001"
+    account_code     = "AC2002"
+    portfolio_id     = "PF3003"
+    project_id       = "PR4004"
+    service_id       = "SV5005"
+    environment_type = "nonprod"
+    owner_business   = "platform"
+    budget_holder    = "finops"
   }
 
   topics = {}
